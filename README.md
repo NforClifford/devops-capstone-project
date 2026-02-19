@@ -1,4 +1,5 @@
-# DevOps Capstone Template
+# devops-capstone-project
+This capstone project is to develop an account microservice that keep track of the customers on an e-commerce website
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python 3.9](https://img.shields.io/badge/Python-3.9-green.svg)](https://shields.io/)
