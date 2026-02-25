@@ -8,6 +8,7 @@ apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:  
   name: cd-pipeline
+
 spec:
   workspaces:
     - name: pipeline-workspace
@@ -15,6 +16,7 @@ spec:
     - name: repo-url
     - name: branch
       default: main
+    - name: build-image
   tasks:
     - name: init
       workspaces:
@@ -64,3 +66,41 @@ spec:
           value: "-v --with-spec --spec-color"
       runAfter:
         - clone
+
+    - name: build
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+      taskRef:
+        name: buildah
+        kind: ClusterTask
+      params:
+      - name: IMAGE
+        value: "$(params.build-image)"
+      runAfter:
+        - tests
+        - lint
+
+    - name: deploy
+      runAfter:
+        - build
+      workspaces:
+        - name: manifest-dir
+          workspace: pipeline-workspace
+      taskRef:
+        name: openshift-client
+        kind: ClusterTask
+      params:
+        - name: SCRIPT
+          value: |
+            echo "Updating manifest with built image..."
+            sed -i "s|IMAGE_NAME_HERE|$(params.build-image)|g" deploy/deployment.yaml
+
+            echo "=== Updated deployment.yaml ==="
+            cat deploy/deployment.yaml
+
+            echo "Deploying to OpenShift..."
+            oc apply -f deploy/
+
+            echo "Checking pods..."
+            oc get pods -l app=accounts
